@@ -1,120 +1,115 @@
 # Mini Job Queue Dashboard
 
-A **Mini Job Queue Management System** built with **NestJS**, **Prisma (SQLite)**, and **React + JavaScript (Vite)**.
+A small job queue dashboard built for the React + NestJS internship assignment.
+
+It lets you create jobs, view them, filter by status, update their status and delete them.
 
 ## Tech Stack
 
-- **Backend**: NestJS + TypeScript + Prisma ORM + SQLite
-- **Frontend**: React + JavaScript + Vite + Axios
-- **Validation**: `class-validator` with strict DTO rules
-- **Testing**: Vitest unit tests
+* **Frontend:** React, JavaScript, Vite, Axios
+* **Backend:** NestJS, TypeScript
+* **Database:** SQLite with Prisma
+* **Validation:** class-validator
+* **Tests:** Vitest
 
 ## Project Structure
 
-```
+```text
 assesment/
 ├── backend/
 │   ├── src/
 │   │   ├── jobs/
 │   │   │   ├── dto/
-│   │   │   │   ├── create-job.dto.ts
-│   │   │   │   └── update-job-status.dto.ts
 │   │   │   ├── job-status.ts
 │   │   │   ├── jobs.controller.ts
-│   │   │   ├── jobs.module.ts
-│   │   │   └── jobs.service.ts
+│   │   │   ├── jobs.service.ts
+│   │   │   └── jobs.module.ts
 │   │   ├── prisma/
-│   │   │   ├── prisma.module.ts
-│   │   │   └── prisma.service.ts
 │   │   ├── app.module.ts
 │   │   └── main.ts
-│   ├── scripts/
-│   │   └── benchmark-concurrency.ts
 │   ├── prisma/
-│   │   └── schema.prisma
-│   ├── .env
 │   └── package.json
 │
 └── frontend/
     ├── src/
     │   ├── components/
-    │   │   ├── MetricsHeader.jsx
-    │   │   ├── JobFilter.jsx
-    │   │   ├── JobTable.jsx
-    │   │   ├── CreateJobModal.jsx
-    │   │   └── ConcurrencyModal.jsx
     │   ├── services/
-    │   │   └── api.js
     │   ├── App.jsx
-    │   ├── index.css
     │   └── main.jsx
     └── package.json
 ```
 
-## API Endpoints
+## API
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/jobs` | Create a new job |
-| `GET` | `/jobs` | List all jobs (with `?status=`, `?page=`, `?limit=`) |
-| `GET` | `/jobs/:id` | Get single job |
-| `PATCH` | `/jobs/:id/status` | Update job status |
-| `DELETE` | `/jobs/:id` | Delete job |
-| `POST` | `/jobs/:id/simulate-concurrency` | Run concurrent stress test |
+| Method | Endpoint           | Purpose           |
+| ------ | ------------------ | ----------------- |
+| POST   | `/jobs`            | Create a job      |
+| GET    | `/jobs`            | Get all jobs      |
+| PATCH  | `/jobs/:id/status` | Change job status |
+| DELETE | `/jobs/:id`        | Delete a job      |
 
-## Job State Transitions
+## Status Flow
 
-```
-pending ──→ running ──→ completed  (terminal)
-   └──────────┴────────→ failed    (terminal)
-```
-
-State transitions are enforced server-side. `completed` and `failed` are locked.
-
-## Concurrency Handling
-
-Uses **Optimistic Concurrency Control (OCC)** via a `version` field.
-
-```sql
-UPDATE jobs SET status = ?, version = version + 1
-WHERE id = ? AND status = ? AND version = ?
+```text
+pending → running → completed
+   ↓
+ failed
 ```
 
-If 1000 requests fire simultaneously, only 1 succeeds — the rest get a clean `409 Conflict`.
+Status changes are checked on the backend.
+`completed` and `failed` are final states.
 
-**Benchmark result (1000 concurrent users):**
-```
-✅ Succeeded : 1
-🔒 Conflicts : 999
-⏱ Duration  : 467ms
-⚡ Throughput: 2141 req/sec
-```
+## Concurrency
 
-## Local Setup
+The status transition rule is enforced by the backend, not just the UI.
+
+A `version` field is used for optimistic concurrency control. When two requests try to change the same pending job at the same time, only one update can succeed. The other request gets a `409 Conflict`.
+
+This also prevents someone from bypassing the frontend and calling the API directly with an invalid state change.
+
+## Validation & Errors
+
+* Required fields are validated before creating a job.
+* Invalid status values are rejected.
+* Invalid state transitions are rejected.
+* Missing jobs return an appropriate error.
+* API errors are shown on the frontend.
+
+## Run Locally
 
 ### Backend
+
 ```bash
 cd backend
 npm install
-npm run dev           # starts at http://localhost:3000
+npm run dev
 ```
 
+Runs on `http://localhost:3000`.
+
 ### Frontend
+
 ```bash
 cd frontend
 npm install
-npm run dev           # starts at http://localhost:5173
+npm run dev
 ```
 
-### Run Concurrency Benchmark
-```bash
-cd backend
-npm run benchmark
-```
+Runs on `http://localhost:5173`.
 
-## Environment Variables
+### Environment
 
 ```env
 DATABASE_URL="file:./dev.db"
 PORT=3000
 ```
+
+## Assumptions
+
+* SQLite is used to keep the setup simple for this assignment.
+* Jobs are stored permanently in the database.
+* No authentication is added because it was not required.
+
+## Possible Improvements
+
+For a larger system, I would consider PostgreSQL, authentication, pagination and a real background worker for processing jobs.
