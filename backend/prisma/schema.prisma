@@ -3,19 +3,23 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+enum JobStatus {
+  pending
+  running
+  completed
+  failed
+}
+
 model Job {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   title     String
   type      String
-  status    String   @default("pending")
-  version   Int      @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([status])
-  @@index([createdAt])
+  status    JobStatus @default(pending)
+  version   Int       @default(1)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
