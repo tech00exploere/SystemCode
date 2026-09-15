@@ -9,11 +9,12 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "incremental": true,
+    "rootDir": "./src",
     "skipLibCheck": true,
     "strict": true,
     "strictPropertyInitialization": false,
     "ignoreDeprecations": "5.0",
     "types": ["node"]
-  }
+  },
+  "exclude": ["node_modules", "dist", "scripts"]
 }
