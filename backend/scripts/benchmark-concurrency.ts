@@ -1,33 +1,26 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, JobStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  pending: ['running', 'failed'],
-  running: ['completed', 'failed'],
+const ALLOWED_TRANSITIONS: Record<JobStatus, JobStatus[]> = {
+  pending: [JobStatus.running, JobStatus.failed],
+  running: [JobStatus.completed, JobStatus.failed],
   completed: [],
   failed: [],
 };
 
-async function updateJobStatusAtomic(id: string, targetStatus: string) {
+async function updateJobStatusAtomic(id: string, targetStatus: JobStatus) {
   const currentJob = await prisma.job.findUnique({ where: { id } });
   if (!currentJob) throw new Error('Job not found');
 
   const allowed = ALLOWED_TRANSITIONS[currentJob.status] || [];
   if (!allowed.includes(targetStatus)) {
-    return { status: 400, message: `Illegal state transition` };
+    return { status: 400, message: 'Illegal state transition' };
   }
 
   const result = await prisma.job.updateMany({
-    where: {
-      id,
-      status: currentJob.status,
-      version: currentJob.version,
-    },
-    data: {
-      status: targetStatus,
-      version: { increment: 1 },
-    },
+    where: { id, status: currentJob.status, version: currentJob.version },
+    data: { status: targetStatus, version: { increment: 1 } },
   });
 
   if (result.count === 0) {
@@ -47,14 +40,14 @@ async function runBenchmark(concurrentUsers: number = 1000) {
     data: {
       title: `Stress Test (${concurrentUsers} users)`,
       type: 'stress-test',
-      status: 'pending',
+      status: JobStatus.pending,
       version: 1,
     },
   });
 
   const startTime = Date.now();
   const requests = Array.from({ length: concurrentUsers }, () =>
-    updateJobStatusAtomic(testJob.id, 'running'),
+    updateJobStatusAtomic(testJob.id, JobStatus.running),
   );
 
   const results = await Promise.all(requests);
@@ -62,15 +55,14 @@ async function runBenchmark(concurrentUsers: number = 1000) {
 
   const succeeded = results.filter((r) => r.status === 200).length;
   const conflicts = results.filter((r) => r.status === 409).length;
-  const finalJobState = await prisma.job.findUnique({ where: { id: testJob.id } });
+  const finalJob = await prisma.job.findUnique({ where: { id: testJob.id } });
 
-  console.log(`⏱ Total Duration       : ${durationMs} ms`);
-  console.log(`⚡ Throughput           : ${(concurrentUsers / (durationMs / 1000)).toFixed(2)} req/sec`);
-  console.log(`✅ Succeeded (200 OK)    : ${succeeded}`);
-  console.log(`🔒 Conflicts (409 Conflict): ${conflicts}`);
-  console.log(`📌 Final Status         : "${finalJobState?.status}" (Version: ${finalJobState?.version})`);
-  console.log(`-----------------------------------------------------------`);
-  console.log(`🏆 CONCURRENCY TEST PASSED! Zero race conditions.\n`);
+  console.log(`⏱ Duration    : ${durationMs}ms`);
+  console.log(`⚡ Throughput  : ${(concurrentUsers / (durationMs / 1000)).toFixed(2)} req/sec`);
+  console.log(`✅ Succeeded   : ${succeeded}`);
+  console.log(`🔒 Conflicts   : ${conflicts}`);
+  console.log(`📌 Final status: "${finalJob?.status}" (v${finalJob?.version})`);
+  console.log(`🏆 Zero race conditions.\n`);
 
   await prisma.job.delete({ where: { id: testJob.id } });
   await prisma.$disconnect();
