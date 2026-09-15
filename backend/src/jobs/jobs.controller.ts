@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -10,16 +12,34 @@ import {
 } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobStatusDto } from './dto/update-job-status.dto';
+import { IdempotencyService } from './idempotency.service';
 import { JobStatus } from './job-status';
 import { JobsService } from './jobs.service';
 
 @Controller('jobs')
 export class JobsController {
-  constructor(private readonly jobsService: JobsService) {}
+  constructor(
+    private readonly jobsService: JobsService,
+    private readonly idempotencyService: IdempotencyService,
+  ) {}
 
   @Post()
-  async createJob(@Body() dto: CreateJobDto) {
-    return this.jobsService.createJob(dto);
+  async createJob(
+    @Body() dto: CreateJobDto,
+    @Headers('idempotency-key') idempotencyKey?: string,
+  ) {
+    if (idempotencyKey) {
+      const cached = this.idempotencyService.get(idempotencyKey);
+      if (cached) return cached;
+    }
+
+    const job = await this.jobsService.createJob(dto);
+
+    if (idempotencyKey) {
+      this.idempotencyService.set(idempotencyKey, job);
+    }
+
+    return job;
   }
 
   @Get()
@@ -49,6 +69,7 @@ export class JobsController {
   }
 
   @Delete(':id')
+  @HttpCode(204)
   async deleteJob(@Param('id') id: string) {
     return this.jobsService.deleteJob(id);
   }
