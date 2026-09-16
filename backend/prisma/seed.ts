@@ -1,5 +1,5 @@
-// prisma/seed.ts
-import { PrismaClient, Difficulty } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { Difficulty } from '../src/common/enums';
 
 const prisma = new PrismaClient();
 

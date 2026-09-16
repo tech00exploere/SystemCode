@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RuleBasedEvaluator } from './evaluators/rule-based.evaluator';
 import { AIEvaluator } from './evaluators/ai.evaluator';
 import { EvaluatorInput, DimensionResult } from './evaluators/base.evaluator';
-import { AttemptStatus } from '@prisma/client';
+import { AttemptStatus } from '../common/enums';
 
 @Injectable()
 export class EvaluationService {

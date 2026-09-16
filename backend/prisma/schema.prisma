@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -13,7 +13,7 @@ model Problem {
   id               String    @id @default(cuid())
   title            String
   slug             String    @unique
-  difficulty       Difficulty
+  difficulty       String
   category         String
   description      String
   requirements     String    // JSON-encoded string[]
@@ -24,13 +24,13 @@ model Problem {
 }
 
 model Attempt {
-  id          String        @id @default(cuid())
+  id          String      @id @default(cuid())
   problemId   String
-  problem     Problem       @relation(fields: [problemId], references: [id])
-  status      AttemptStatus @default(DRAFT)
+  problem     Problem     @relation(fields: [problemId], references: [id])
+  status      String      @default("DRAFT")
   submission  Submission?
   feedback    Feedback?
-  startedAt   DateTime      @default(now())
+  startedAt   DateTime    @default(now())
   submittedAt DateTime?
 }
 
@@ -64,18 +64,4 @@ model FeedbackDimension {
   score       Int
   comment     String
   suggestions String   // JSON-encoded string[]
-}
-
-enum Difficulty {
-  EASY
-  MEDIUM
-  HARD
-}
-
-enum AttemptStatus {
-  DRAFT
-  SUBMITTED
-  EVALUATING
-  EVALUATED
-  EVALUATION_FAILED
 }

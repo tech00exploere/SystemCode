@@ -8,7 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EvaluationService } from '../evaluation/evaluation.service';
 import { CreateAttemptDto } from './dto/create-attempt.dto';
 import { SubmitAttemptDto } from './dto/submit-attempt.dto';
-import { AttemptStatus } from '@prisma/client';
+import { AttemptStatus } from '../common/enums';
 
 @Injectable()
 export class AttemptsService {
