@@ -50,11 +50,21 @@ export class ProblemsService {
   private parseProblem(problem: any) {
     return {
       ...problem,
-      requirements: JSON.parse(problem.requirements),
-      expectedConcepts: JSON.parse(problem.expectedConcepts),
-      hints: JSON.parse(problem.hints),
+      requirements: this.safeParseJson(problem.requirements),
+      expectedConcepts: this.safeParseJson(problem.expectedConcepts),
+      hints: this.safeParseJson(problem.hints),
       attemptCount: problem._count?.attempts ?? 0,
       _count: undefined,
     };
+  }
+
+  private safeParseJson(value: any) {
+    if (Array.isArray(value)) return value;
+    if (typeof value !== 'string') return [];
+    try {
+      return JSON.parse(value);
+    } catch {
+      return [];
+    }
   }
 }

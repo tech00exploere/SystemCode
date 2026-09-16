@@ -78,7 +78,7 @@ export class AttemptsService {
     if (attempt.feedback?.dimensions) {
       (attempt.feedback as any).dimensions = attempt.feedback.dimensions.map((d: any) => ({
         ...d,
-        suggestions: JSON.parse(d.suggestions as any),
+        suggestions: this.safeParseJson(d.suggestions),
       }));
     }
 
@@ -86,13 +86,23 @@ export class AttemptsService {
     if (attempt.problem) {
       (attempt as any).problem = {
         ...attempt.problem,
-        requirements: JSON.parse(attempt.problem.requirements),
-        expectedConcepts: JSON.parse(attempt.problem.expectedConcepts),
-        hints: JSON.parse(attempt.problem.hints),
+        requirements: this.safeParseJson(attempt.problem.requirements),
+        expectedConcepts: this.safeParseJson(attempt.problem.expectedConcepts),
+        hints: this.safeParseJson(attempt.problem.hints),
       };
     }
 
     return attempt;
+  }
+
+  private safeParseJson(value: any) {
+    if (Array.isArray(value)) return value;
+    if (typeof value !== 'string') return [];
+    try {
+      return JSON.parse(value);
+    } catch {
+      return [];
+    }
   }
 
   /**
@@ -173,7 +183,7 @@ export class AttemptsService {
       ...attempt.feedback,
       dimensions: attempt.feedback.dimensions.map((d: any) => ({
         ...d,
-        suggestions: JSON.parse(d.suggestions as any),
+        suggestions: this.safeParseJson(d.suggestions),
       })),
     };
 
