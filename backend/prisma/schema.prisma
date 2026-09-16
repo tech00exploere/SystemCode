@@ -1,25 +1,81 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum JobStatus {
-  pending
-  running
-  completed
-  failed
+model Problem {
+  id               String    @id @default(cuid())
+  title            String
+  slug             String    @unique
+  difficulty       Difficulty
+  category         String
+  description      String
+  requirements     String    // JSON-encoded string[]
+  expectedConcepts String    // JSON-encoded string[]
+  hints            String    // JSON-encoded string[]
+  attempts         Attempt[]
+  createdAt        DateTime  @default(now())
 }
 
-model Job {
-  id        String    @id @default(uuid())
-  title     String
-  type      String
-  status    JobStatus @default(pending)
-  version   Int       @default(1)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+model Attempt {
+  id          String        @id @default(cuid())
+  problemId   String
+  problem     Problem       @relation(fields: [problemId], references: [id])
+  status      AttemptStatus @default(DRAFT)
+  submission  Submission?
+  feedback    Feedback?
+  startedAt   DateTime      @default(now())
+  submittedAt DateTime?
+}
+
+model Submission {
+  id               String   @id @default(cuid())
+  attemptId        String   @unique
+  attempt          Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  textDesign       String
+  classDefinitions String
+  assumptions      String
+  createdAt        DateTime @default(now())
+}
+
+model Feedback {
+  id           String              @id @default(cuid())
+  attemptId    String              @unique
+  attempt      Attempt             @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  overallScore Int
+  ruleScore    Int
+  aiScore      Int
+  summary      String
+  dimensions   FeedbackDimension[]
+  generatedAt  DateTime            @default(now())
+}
+
+model FeedbackDimension {
+  id          String   @id @default(cuid())
+  feedbackId  String
+  feedback    Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  name        String
+  score       Int
+  comment     String
+  suggestions String   // JSON-encoded string[]
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum AttemptStatus {
+  DRAFT
+  SUBMITTED
+  EVALUATING
+  EVALUATED
+  EVALUATION_FAILED
 }

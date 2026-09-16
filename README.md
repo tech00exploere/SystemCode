@@ -1,115 +1,61 @@
-# Mini Job Queue Dashboard
+# Low-Level System Design (LLD) Practice Platform
 
-A small job queue dashboard built for the React + NestJS internship assignment.
+A full-stack low-level system design platform with hybrid rule-based and AI evaluation, real-time timer, state machine tracking, and Docker deployment.
 
-It lets you create jobs, view them, filter by status, update their status and delete them.
+---
 
-## Tech Stack
+## 🏗 Stack Overview
 
-* **Frontend:** React, JavaScript, Vite, Axios
-* **Backend:** NestJS, TypeScript
-* **Database:** SQLite with Prisma
-* **Validation:** class-validator
-* **Tests:** Vitest
+- **Frontend**: React 19, TypeScript, Vite, React Router 7, Vanilla CSS Design System.
+- **Backend**: NestJS 12, TypeScript, Prisma ORM, SQLite (`dev.db`).
+- **Evaluation Engine**: Dual-layer hybrid architecture (40% deterministic rule verification + 60% Gemini AI architecture reasoning).
 
-## Project Structure
+---
 
-```text
-assesment/
-├── backend/
-│   ├── src/
-│   │   ├── jobs/
-│   │   │   ├── dto/
-│   │   │   ├── job-status.ts
-│   │   │   ├── jobs.controller.ts
-│   │   │   ├── jobs.service.ts
-│   │   │   └── jobs.module.ts
-│   │   ├── prisma/
-│   │   ├── app.module.ts
-│   │   └── main.ts
-│   ├── prisma/
-│   └── package.json
-│
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   ├── services/
-    │   ├── App.jsx
-    │   └── main.jsx
-    └── package.json
-```
+## ⚡ Quick Start
 
-## API
-
-| Method | Endpoint           | Purpose           |
-| ------ | ------------------ | ----------------- |
-| POST   | `/jobs`            | Create a job      |
-| GET    | `/jobs`            | Get all jobs      |
-| PATCH  | `/jobs/:id/status` | Change job status |
-| DELETE | `/jobs/:id`        | Delete a job      |
-
-## Status Flow
-
-```text
-pending → running → completed
-   ↓
- failed
-```
-
-Status changes are checked on the backend.
-`completed` and `failed` are final states.
-
-## Concurrency
-
-The status transition rule is enforced by the backend, not just the UI.
-
-A `version` field is used for optimistic concurrency control. When two requests try to change the same pending job at the same time, only one update can succeed. The other request gets a `409 Conflict`.
-
-This also prevents someone from bypassing the frontend and calling the API directly with an invalid state change.
-
-## Validation & Errors
-
-* Required fields are validated before creating a job.
-* Invalid status values are rejected.
-* Invalid state transitions are rejected.
-* Missing jobs return an appropriate error.
-* API errors are shown on the frontend.
-
-## Run Locally
-
-### Backend
-
+### 1. Setup Backend
 ```bash
 cd backend
 npm install
+npx prisma db push
+npm run db:seed
 npm run dev
 ```
+Backend server runs at `http://localhost:3001/api`.
 
-Runs on `http://localhost:3000`.
-
-### Frontend
-
+### 2. Setup Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+Frontend app runs at `http://localhost:5173`.
 
-Runs on `http://localhost:5173`.
+---
 
-### Environment
+## 🧪 Testing & Build Verification
 
-```env
-DATABASE_URL="file:./dev.db"
-PORT=3000
+```bash
+# Run Backend Unit Tests (7/7 Passing)
+cd backend && npm run test
+
+# Run Frontend Production Build
+cd frontend && npm run build
 ```
 
-## Assumptions
+---
 
-* SQLite is used to keep the setup simple for this assignment.
-* Jobs are stored permanently in the database.
-* No authentication is added because it was not required.
+## 🐳 Docker Deployment
 
-## Possible Improvements
+```bash
+# Deploy full stack with Docker Compose
+docker-compose up -d --build
+```
 
-For a larger system, I would consider PostgreSQL, authentication, pagination and a real background worker for processing jobs.
+---
+
+## 📄 Documentation & Audits
+
+- **[ARCHITECTURE_AUDIT.md](ARCHITECTURE_AUDIT.md)** — Architectural design review & guidelines compliance audit.
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** — Production deployment guide for Docker, Render, Vercel, Railway, and VPS.
