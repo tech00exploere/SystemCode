@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 const problems = [
   {
-    title: 'Design a Parking Lot System',
+    title: 'Design a Parking Lot System',  //
     slug: 'parking-lot',
     difficulty: Difficulty.MEDIUM,
     category: 'OOP / State Management',
